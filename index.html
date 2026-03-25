@@ -856,6 +856,19 @@ window.TVI_DATA = {
   "confidence": 72
 };
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var d = window.TVI_DATA;
+  if (!d || !d.updated_at) return;
+  var dt = new Date(d.updated_at);
+  var pad = function(n) { return String(n).padStart(2, '0'); };
+  var str = dt.getFullYear() + '-' + pad(dt.getMonth()+1) + '-' + pad(dt.getDate())
+          + ' ' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
+  var el = document.getElementById('updated-time');
+  if (el) el.textContent = '更新于 ' + str;
+});
+</script>
 </body>
 </html>
 
