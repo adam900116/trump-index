@@ -571,15 +571,15 @@
 <div class="main">
 
   <!-- TVI Main Score -->
-  <div class="card danger tvi-main">
+  <div class="card danger tvi-main" id="tvi-main-card">
     <div class="card-label">// TRUMP VOLATILITY INDEX</div>
     <div class="tvi-score-wrap">
-      <div class="tvi-score-bg">78</div>
-      <div class="tvi-score">78</div>
+      <div class="tvi-score-bg" id="score-bg">--</div>
+      <div class="tvi-score" id="score-main">--</div>
       <div class="tvi-max">/ 100</div>
     </div>
-    <div class="risk-badge">
-      <span>⚠</span> 高危区间 · HIGH RISK
+    <div class="risk-badge" id="risk-badge">
+      <span>⚠</span> 加载中...
     </div>
     <div class="formula">
       TVI <span class="op">=</span> (<span class="var">政治压力</span> <span class="op">×</span> <span class="num">0.30</span>
@@ -617,7 +617,7 @@
           <text x="90" y="14" fill="#555" font-size="9" font-family="IBM Plex Mono">50</text>
           <text x="178" y="115" fill="#555" font-size="9" font-family="IBM Plex Mono">100</text>
         </svg>
-        <div class="gauge-value">78</div>
+        <div class="gauge-value" id="gauge-value">--</div>
       </div>
     </div>
     <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--muted); margin-top:8px;">
@@ -850,6 +850,44 @@ window.TVI_DATA = {
     }
   ]
 };
+
+// 动态更新页面
+(function() {
+  var d = window.TVI_DATA;
+  if (!d) return;
+  
+  // 主分数
+  document.getElementById('score-main').textContent = d.tvi;
+  document.getElementById('score-bg').textContent = d.tvi;
+  
+  // 风险标签
+  var badge = document.getElementById('risk-badge');
+  var riskText = d.risk_level === '极危' ? '极危' : d.risk_level === '高危' ? '高危' : d.risk_level === '警戒' ? '警戒' : '安全';
+  var riskLabel = d.tvi >= 65 ? 'HIGH RISK' : d.tvi >= 45 ? 'MEDIUM RISK' : 'LOW RISK';
+  badge.innerHTML = '<span>⚠</span> ' + riskText + ' · ' + riskLabel;
+  
+  // 仪表盘
+  document.getElementById('gauge-value').textContent = d.tvi;
+  
+  // 针角度 (-90 to 90)
+  var angle = -90 + (180 * d.tvi / 100);
+  var needle = document.getElementById('needle');
+  if (needle) {
+    setTimeout(function() {
+      needle.style.transform = 'rotate(' + angle + 'deg)';
+    }, 500);
+  }
+  
+  // 强度标记
+  var marker = document.getElementById('intensityMarker');
+  if (marker) {
+    marker.style.left = d.tvi + '%';
+    marker.setAttribute('data-tvi', d.tvi);
+    // Update label
+    var label = marker.querySelector('::after'); 
+    // CSS :after can't be updated via JS, so we'll update the marker text another way
+  }
+})();
 </script>
 </body>
 </html>
