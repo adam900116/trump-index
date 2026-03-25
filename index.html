@@ -449,7 +449,7 @@
   }
 
   .intensity-marker::after {
-    content: '7.2';
+    content: attr(data-tvi);
     position: absolute;
     top: -20px;
     left: 50%;
@@ -578,6 +578,12 @@
       <div class="tvi-score" id="score-main">48</div>
       <div class="tvi-max">/ 100</div>
     </div>
+    <div class="tvi-updated" id="updated-time" style="
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+      letter-spacing: 1px;
+    ">更新于 --</div>
     <div class="risk-badge" id="risk-badge">
       <span>⚠</span> 警戒 · MEDIUM RISK
     </div>
@@ -617,7 +623,7 @@
           <text x="90" y="14" fill="#555" font-size="9" font-family="IBM Plex Mono">50</text>
           <text x="178" y="115" fill="#555" font-size="9" font-family="IBM Plex Mono">100</text>
         </svg>
-        <div class="gauge-value" id="gauge-value">--</div>
+        <div class="gauge-value" id="gauge-value">48</div>
       </div>
     </div>
     <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--muted); margin-top:8px;">
@@ -664,11 +670,6 @@
     <div class="card-label">// 历史发病记录</div>
     <div class="timeline">
       <div class="timeline-item hot">
-        <div class="timeline-date">2026-03-23 · 🇮🇷 伊朗/中东</div>
-        <div class="timeline-event">特朗普:已将伊朗彻底从地图上抹去</div>
-        <div class="timeline-score">TVI 自动更新</div>
-      </div>
-      <div class="timeline-item hot">
         <div class="timeline-date">2026-02-24 · 🇨🇳 中国</div>
         <div class="timeline-event">特朗普掀起新“关税大战”</div>
         <div class="timeline-score">TVI 自动更新</div>
@@ -676,11 +677,6 @@
       <div class="timeline-item hot">
         <div class="timeline-date">2025-04-10 · 🇪🇺 欧盟</div>
         <div class="timeline-event">愤怒的游客因特朗普的“霸凌行径”放弃赴美度假 - 财富中文网</div>
-        <div class="timeline-score">TVI 自动更新</div>
-      </div>
-      <div class="timeline-item hot">
-        <div class="timeline-date">2025-03-20 · 🇮🇷 伊朗/中东</div>
-        <div class="timeline-event">Trump sets two-month deadline </div>
         <div class="timeline-score">TVI 自动更新</div>
       </div>
       <div class="timeline-item hot">
@@ -752,7 +748,7 @@
     <div class="card-label">// 当前烈度位置</div>
     <div class="intensity-bar-wrap">
       <div class="intensity-track">
-        <div class="intensity-marker" id="intensityMarker" style="left: 72%"></div>
+        <div class="intensity-marker" id="intensityMarker" data-tvi="48" style="left: 48%"></div>
       </div>
       <div class="intensity-labels">
         <span>1 · 口嗨</span>
@@ -797,8 +793,9 @@
     setTimeout(() => {
       const needle = document.getElementById('needle');
       // -90deg = 0, +90deg = 100
-      // 78/100 = 0.78, angle = -90 + (180 * 0.78) = -90 + 140.4 = 50.4deg
-      const angle = -90 + (180 * 0.78);
+      // Use TVI_DATA if available, otherwise fallback to gauge-value text
+      const tviVal = (window.TVI_DATA && window.TVI_DATA.tvi) ? window.TVI_DATA.tvi : parseFloat(document.getElementById('gauge-value').textContent) || 48;
+      const angle = -90 + (180 * tviVal / 100);
       needle.style.transform = `rotate(${angle}deg)`;
       needle.style.transition = 'transform 2s cubic-bezier(0.34, 1.56, 0.64, 1)';
     }, 800);
@@ -844,10 +841,22 @@ window.TVI_DATA = {
     "欧盟": 0.09,
     "拉美": 0.05
   },
-  "updated_at": "2026-03-25T21:06:26.231387",
+  "updated_at": "2026-03-25T21:13:47.937074",
   "next_window": "4月1-15日",
   "confidence": 72
 };
+
+// 显示更新时间
+(function() {
+  var d = window.TVI_DATA;
+  if (!d || !d.updated_at) return;
+  var dt = new Date(d.updated_at);
+  var pad = function(n) { return String(n).padStart(2, '0'); };
+  var str = dt.getFullYear() + '-' + pad(dt.getMonth()+1) + '-' + pad(dt.getDate())
+          + ' ' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
+  var el = document.getElementById('updated-time');
+  if (el) el.textContent = '更新于 ' + str;
+})();
 </script>
 </body>
 </html>
