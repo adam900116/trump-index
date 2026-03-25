@@ -670,6 +670,11 @@
     <div class="card-label">// 历史发病记录</div>
     <div class="timeline">
       <div class="timeline-item hot">
+        <div class="timeline-date">2026-03-23 · 🇮🇷 伊朗/中东</div>
+        <div class="timeline-event">特朗普:已将伊朗彻底从地图上抹去</div>
+        <div class="timeline-score">TVI 自动更新</div>
+      </div>
+      <div class="timeline-item hot">
         <div class="timeline-date">2026-02-24 · 🇨🇳 中国</div>
         <div class="timeline-event">特朗普掀起新“关税大战”</div>
         <div class="timeline-score">TVI 自动更新</div>
@@ -677,6 +682,11 @@
       <div class="timeline-item hot">
         <div class="timeline-date">2025-04-10 · 🇪🇺 欧盟</div>
         <div class="timeline-event">愤怒的游客因特朗普的“霸凌行径”放弃赴美度假 - 财富中文网</div>
+        <div class="timeline-score">TVI 自动更新</div>
+      </div>
+      <div class="timeline-item hot">
+        <div class="timeline-date">2025-03-20 · 🇮🇷 伊朗/中东</div>
+        <div class="timeline-event">Trump sets two-month deadline </div>
         <div class="timeline-score">TVI 自动更新</div>
       </div>
       <div class="timeline-item hot">
@@ -841,22 +851,10 @@ window.TVI_DATA = {
     "欧盟": 0.09,
     "拉美": 0.05
   },
-  "updated_at": "2026-03-25T21:13:47.937074",
+  "updated_at": "2026-03-25T21:27:50.450350",
   "next_window": "4月1-15日",
   "confidence": 72
 };
-
-// 显示更新时间
-(function() {
-  var d = window.TVI_DATA;
-  if (!d || !d.updated_at) return;
-  var dt = new Date(d.updated_at);
-  var pad = function(n) { return String(n).padStart(2, '0'); };
-  var str = dt.getFullYear() + '-' + pad(dt.getMonth()+1) + '-' + pad(dt.getDate())
-          + ' ' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
-  var el = document.getElementById('updated-time');
-  if (el) el.textContent = '更新于 ' + str;
-})();
 </script>
 </body>
 </html>
