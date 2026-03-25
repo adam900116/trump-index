@@ -204,6 +204,96 @@ def save_data(data: dict):
     print(f"[TVI] 数据已保存: {DATA_FILE}")
 
 
+def update_html(data: dict):
+    """直接把最新数据写进HTML静态内容，彻底替换硬编码数字"""
+    if not OUTPUT_HTML.exists():
+        print("[TVI] 警告: index.html不存在，跳过HTML更新")
+        return
+
+    tvi = int(data["tvi"])
+    risk_level = data["risk_level"]
+    risk_color = data["risk_color"]
+    directions = data["directions"]
+
+    # 风险标签文字
+    if tvi >= 80:
+        risk_en = "EXTREME RISK"
+    elif tvi >= 65:
+        risk_en = "HIGH RISK"
+    elif tvi >= 45:
+        risk_en = "MEDIUM RISK"
+    else:
+        risk_en = "LOW RISK"
+
+    html = OUTPUT_HTML.read_text(encoding="utf-8")
+
+    # 1. 替换主分数（大数字）
+    import re
+    html = re.sub(
+        r'(<div class="tvi-score-bg">)\d+\.?\d*(</div>)',
+        rf'\g<1>{tvi}\2', html
+    )
+    html = re.sub(
+        r'(<div class="tvi-score" id="score-main">)[^<]*(</div>)',
+        rf'\g<1>{tvi}\2', html
+    )
+    html = re.sub(
+        r'(<div class="tvi-score-bg" id="score-bg">)[^<]*(</div>)',
+        rf'\g<1>{tvi}\2', html
+    )
+    # 兼容没有id的版本
+    html = re.sub(
+        r'(<div class="tvi-score">)\d+\.?\d*(</div>)',
+        rf'\g<1>{tvi}\2', html
+    )
+
+    # 2. 替换仪表盘数字
+    html = re.sub(
+        r'(<div class="gauge-value"[^>]*>)\d+\.?\d*(</div>)',
+        rf'\g<1>{tvi}\2', html
+    )
+
+    # 3. 替换风险标签
+    html = re.sub(
+        r'(<div class="risk-badge"[^>]*>.*?<span>⚠</span>\s*)[^<]*(</div>)',
+        rf'\g<1>{risk_level} · {risk_en}\2', html, flags=re.DOTALL
+    )
+
+    # 4. 替换顶部状态栏风险等级
+    html = re.sub(
+        r'(<div style="color: var\(--red\)">)[^<]*(</div>)',
+        rf'\g<1>{risk_level}</div>', html
+    )
+
+    # 5. 替换方向概率
+    dir_items = list(directions.items())
+    dir_flags = ["🇨🇳", "🇮🇷", "🇪🇺", "🌎"]
+    for i, (name, prob) in enumerate(dir_items[:4]):
+        pct = int(prob * 100)
+        # 替换对应方向的百分比文字
+        html = re.sub(
+            rf'(<div class="direction-flag">{dir_flags[i]}</div>\s*<div class="direction-name">[^<]*</div>\s*<div class="direction-bar-wrap"><div class="direction-bar" style="width:)\d+%',
+            rf'\g<1>{pct}%',
+            html
+        )
+        html = re.sub(
+            rf'(direction-flag">{dir_flags[i]}</div>.*?direction-pct">)\d+%(</div>)',
+            rf'\g<1>{pct}%\2',
+            html, flags=re.DOTALL
+        )
+
+    # 6. 更新JSON数据块
+    json_str = json.dumps({**data}, ensure_ascii=False, indent=2)
+    html = re.sub(
+        r'<script id="tvi-data">[\s\S]*?</script>',
+        f'<script id="tvi-data">\nwindow.TVI_DATA = {json_str};\n</script>',
+        html
+    )
+
+    OUTPUT_HTML.write_text(html, encoding="utf-8")
+    print(f"[TVI] HTML已更新: TVI={tvi}, {risk_level}")
+
+
 def main():
     print("=" * 50)
     print("  TVI - Trump Volatility Index Engine v2.1")
@@ -212,6 +302,7 @@ def main():
 
     data = calculate_tvi()
     save_data(data)
+    update_html(data)
 
     print("\n" + "=" * 50)
     print(f"  TVI: {data['tvi']}/100 · {data['risk_level']}")

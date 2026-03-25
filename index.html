@@ -564,7 +564,7 @@
     <div class="live"><div class="live-dot"></div>LIVE</div>
     <div>2026-03-25 17:15 CST</div>
     <div>MODEL v2.1</div>
-    <div style="color: var(--red)">HIGH RISK</div>
+    <div style="color: var(--red)">警戒</div>
   </div>
 </header>
 
@@ -574,13 +574,12 @@
   <div class="card danger tvi-main" id="tvi-main-card">
     <div class="card-label">// TRUMP VOLATILITY INDEX</div>
     <div class="tvi-score-wrap">
-      <div class="tvi-score-bg" id="score-bg">--</div>
-      <div class="tvi-score" id="score-main">--</div>
+      <div class="tvi-score-bg" id="score-bg">48</div>
+      <div class="tvi-score" id="score-main">48</div>
       <div class="tvi-max">/ 100</div>
     </div>
     <div class="risk-badge" id="risk-badge">
-      <span>⚠</span> 加载中...
-    </div>
+      <span>⚠</span> 警戒 · MEDIUM RISK</div>
     <div class="formula">
       TVI <span class="op">=</span> (<span class="var">政治压力</span> <span class="op">×</span> <span class="num">0.30</span>
       <span class="op">+</span> <span class="var">经济因子</span> <span class="op">×</span> <span class="num">0.25</span>
@@ -635,20 +634,20 @@
       <div class="direction-item">
         <div class="direction-flag">🇨🇳</div>
         <div class="direction-name">中国</div>
-        <div class="direction-bar-wrap"><div class="direction-bar" style="width:60%"></div></div>
-        <div class="direction-pct">60%</div>
+        <div class="direction-bar-wrap"><div class="direction-bar" style="width:59%"></div></div>
+        <div class="direction-pct">59%</div>
       </div>
       <div class="direction-item">
         <div class="direction-flag">🇮🇷</div>
         <div class="direction-name">伊朗/中东</div>
-        <div class="direction-bar-wrap"><div class="direction-bar" style="width:25%; background:var(--orange)"></div></div>
-        <div class="direction-pct">25%</div>
+        <div class="direction-bar-wrap"><div class="direction-bar" style="width:27%; background:var(--orange)"></div></div>
+        <div class="direction-pct">27%</div>
       </div>
       <div class="direction-item">
         <div class="direction-flag">🇪🇺</div>
         <div class="direction-name">欧盟</div>
-        <div class="direction-bar-wrap"><div class="direction-bar" style="width:10%; background:var(--yellow)"></div></div>
-        <div class="direction-pct">10%</div>
+        <div class="direction-bar-wrap"><div class="direction-bar" style="width:9%; background:var(--yellow)"></div></div>
+        <div class="direction-pct">9%</div>
       </div>
       <div class="direction-item">
         <div class="direction-flag">🌎</div>
@@ -839,55 +838,10 @@ window.TVI_DATA = {
     "欧盟": 0.09,
     "拉美": 0.05
   },
-  "updated_at": "2026-03-25T19:10:39.541333",
+  "updated_at": "2026-03-25T21:00:43.882667",
   "next_window": "4月1-15日",
-  "confidence": 72,
-  "history": [
-    {
-      "date": "2026-03-25",
-      "tvi": 48.0,
-      "risk_level": "警戒"
-    }
-  ]
+  "confidence": 72
 };
-
-// 动态更新页面
-(function() {
-  var d = window.TVI_DATA;
-  if (!d) return;
-  
-  // 主分数
-  document.getElementById('score-main').textContent = d.tvi;
-  document.getElementById('score-bg').textContent = d.tvi;
-  
-  // 风险标签
-  var badge = document.getElementById('risk-badge');
-  var riskText = d.risk_level === '极危' ? '极危' : d.risk_level === '高危' ? '高危' : d.risk_level === '警戒' ? '警戒' : '安全';
-  var riskLabel = d.tvi >= 65 ? 'HIGH RISK' : d.tvi >= 45 ? 'MEDIUM RISK' : 'LOW RISK';
-  badge.innerHTML = '<span>⚠</span> ' + riskText + ' · ' + riskLabel;
-  
-  // 仪表盘
-  document.getElementById('gauge-value').textContent = d.tvi;
-  
-  // 针角度 (-90 to 90)
-  var angle = -90 + (180 * d.tvi / 100);
-  var needle = document.getElementById('needle');
-  if (needle) {
-    setTimeout(function() {
-      needle.style.transform = 'rotate(' + angle + 'deg)';
-    }, 500);
-  }
-  
-  // 强度标记
-  var marker = document.getElementById('intensityMarker');
-  if (marker) {
-    marker.style.left = d.tvi + '%';
-    marker.setAttribute('data-tvi', d.tvi);
-    // Update label
-    var label = marker.querySelector('::after'); 
-    // CSS :after can't be updated via JS, so we'll update the marker text another way
-  }
-})();
 </script>
 </body>
 </html>
