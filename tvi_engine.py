@@ -204,18 +204,50 @@ def save_data(data: dict):
     print(f"[TVI] 数据已保存: {DATA_FILE}")
 
 
+def fetch_recent_incidents() -> list:
+    """搜索最近重大事件，返回时间线条目"""
+    incidents = []
+
+    queries = [
+        ("Trump Iran attack threat nuclear deal 2025 2026", "🇮🇷 伊朗/中东"),
+        ("Trump tariff trade war China 2025 2026", "🇨🇳 中国"),
+        ("Trump threat sanction Europe NATO 2025 2026", "🇪🇺 欧盟"),
+        ("Trump Cuba Venezuela Latin America 2025 2026", "🌎 拉美"),
+    ]
+
+    for query, direction in queries:
+        docs = search_news(query, days_back=180)
+        for doc in docs[:2]:
+            title = doc.get("title", "").strip()
+            date = doc.get("date", "")[:10]
+            passage = doc.get("passage", "").strip()[:80]
+            if title and date and len(title) > 5:
+                # 简单评分：标题越短越精准
+                incidents.append({
+                    "date": date,
+                    "direction": direction,
+                    "title": title[:30],
+                    "desc": passage,
+                    "score": None,  # 待计算
+                })
+
+    # 按日期排序，取最近8条
+    incidents.sort(key=lambda x: x["date"], reverse=True)
+    return incidents[:8]
+
+
 def update_html(data: dict):
     """直接把最新数据写进HTML静态内容，彻底替换硬编码数字"""
     if not OUTPUT_HTML.exists():
         print("[TVI] 警告: index.html不存在，跳过HTML更新")
         return
 
+    import re
+
     tvi = int(data["tvi"])
     risk_level = data["risk_level"]
-    risk_color = data["risk_color"]
     directions = data["directions"]
 
-    # 风险标签文字
     if tvi >= 80:
         risk_en = "EXTREME RISK"
     elif tvi >= 65:
@@ -227,58 +259,56 @@ def update_html(data: dict):
 
     html = OUTPUT_HTML.read_text(encoding="utf-8")
 
-    # 1. 替换主分数（大数字）
-    import re
+    # 1. 替换主分数
+    html = re.sub(r'(<div class="tvi-score-bg"[^>]*>)\d+\.?\d*(</div>)', rf'\g<1>{tvi}\2', html)
+    html = re.sub(r'(<div class="tvi-score"[^>]*>)\d+\.?\d*(</div>)', rf'\g<1>{tvi}\2', html)
+    html = re.sub(r'(<div class="gauge-value"[^>]*>)\d+\.?\d*(</div>)', rf'\g<1>{tvi}\2', html)
+
+    # 2. 替换风险标签
     html = re.sub(
-        r'(<div class="tvi-score-bg">)\d+\.?\d*(</div>)',
-        rf'\g<1>{tvi}\2', html
-    )
-    html = re.sub(
-        r'(<div class="tvi-score" id="score-main">)[^<]*(</div>)',
-        rf'\g<1>{tvi}\2', html
-    )
-    html = re.sub(
-        r'(<div class="tvi-score-bg" id="score-bg">)[^<]*(</div>)',
-        rf'\g<1>{tvi}\2', html
-    )
-    # 兼容没有id的版本
-    html = re.sub(
-        r'(<div class="tvi-score">)\d+\.?\d*(</div>)',
-        rf'\g<1>{tvi}\2', html
+        r'(<div class="risk-badge"[^>]*>)\s*<span>⚠</span>[^<]*(</div>)',
+        rf'\g<1>\n      <span>⚠</span> {risk_level} · {risk_en}\n    \2',
+        html
     )
 
-    # 2. 替换仪表盘数字
-    html = re.sub(
-        r'(<div class="gauge-value"[^>]*>)\d+\.?\d*(</div>)',
-        rf'\g<1>{tvi}\2', html
-    )
-
-    # 3. 替换风险标签
-    html = re.sub(
-        r'(<div class="risk-badge"[^>]*>.*?<span>⚠</span>\s*)[^<]*(</div>)',
-        rf'\g<1>{risk_level} · {risk_en}\2', html, flags=re.DOTALL
-    )
-
-    # 4. 替换顶部状态栏风险等级
+    # 3. 替换顶部状态栏
     html = re.sub(
         r'(<div style="color: var\(--red\)">)[^<]*(</div>)',
-        rf'\g<1>{risk_level}</div>', html
+        rf'\g<1>{risk_level}\2', html
     )
 
-    # 5. 替换方向概率
-    dir_items = list(directions.items())
+    # 4. 替换方向概率
     dir_flags = ["🇨🇳", "🇮🇷", "🇪🇺", "🌎"]
+    dir_items = list(directions.items())
     for i, (name, prob) in enumerate(dir_items[:4]):
         pct = int(prob * 100)
-        # 替换对应方向的百分比文字
+        flag = dir_flags[i]
+        # 替换百分比数字和进度条宽度
         html = re.sub(
-            rf'(<div class="direction-flag">{dir_flags[i]}</div>\s*<div class="direction-name">[^<]*</div>\s*<div class="direction-bar-wrap"><div class="direction-bar" style="width:)\d+%',
-            rf'\g<1>{pct}%',
-            html
+            rf'({re.escape(flag)}</div>\s*<div class="direction-name">[^<]*</div>\s*<div class="direction-bar-wrap"><div class="direction-bar" style="width:)\d+%',
+            rf'\g<1>{pct}%', html
         )
         html = re.sub(
-            rf'(direction-flag">{dir_flags[i]}</div>.*?direction-pct">)\d+%(</div>)',
-            rf'\g<1>{pct}%\2',
+            rf'({re.escape(flag)}.*?direction-pct">)\d+%(</div>)',
+            rf'\g<1>{pct}%\2', html, flags=re.DOTALL
+        )
+
+    # 5. 更新时间线（搜索最新事件）
+    print("[TVI] 搜索最新发病事件...")
+    incidents = fetch_recent_incidents()
+    if incidents:
+        timeline_html = ""
+        for inc in incidents:
+            hot_class = ' hot' if inc["date"] >= "2025-01-01" else ''
+            timeline_html += f'''      <div class="timeline-item{hot_class}">
+        <div class="timeline-date">{inc["date"]} · {inc["direction"]}</div>
+        <div class="timeline-event">{inc["title"]}</div>
+        <div class="timeline-score">TVI 自动更新</div>
+      </div>\n'''
+
+        html = re.sub(
+            r'(<div class="timeline">)\s*.*?(</div>\s*</div>\s*<!-- Market)',
+            rf'\g<1>\n{timeline_html}    \2',
             html, flags=re.DOTALL
         )
 
@@ -291,7 +321,7 @@ def update_html(data: dict):
     )
 
     OUTPUT_HTML.write_text(html, encoding="utf-8")
-    print(f"[TVI] HTML已更新: TVI={tvi}, {risk_level}")
+    print(f"[TVI] HTML已更新: TVI={tvi}, {risk_level}, 时间线{len(incidents)}条")
 
 
 def main():
