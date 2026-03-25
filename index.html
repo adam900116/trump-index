@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TVI · 特朗普发病指数</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #FF2D2D;
+    --orange: #FF6B00;
+    --yellow: #FFD600;
+    --green: #00FF87;
+    --bg: #0A0A0A;
+    --surface: #111111;
+    --border: #222222;
+    --text: #E8E8E8;
+    --muted: #555555;
+    --accent: #FF2D2D;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scanline effect */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 4px;
+    color: var(--red);
+  }
+
+  .logo span {
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 2px;
+    display: block;
+    margin-top: -4px;
+  }
+
+  .status-bar {
+    display: flex;
+    gap: 24px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .status-bar .live {
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  .main {
+    padding: 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 16px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--border);
+  }
+
+  .card.danger::before { background: var(--red); }
+  .card.warning::before { background: var(--orange); }
+  .card.info::before { background: #3B82F6; }
+  .card.success::before { background: var(--green); }
+
+  .card-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  /* Main TVI Score */
+  .tvi-main {
+    grid-column: 1 / 2;
+    grid-row: 1 / 3;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .tvi-score-wrap {
+    position: relative;
+    margin: 20px 0;
+  }
+
+  .tvi-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 140px;
+    line-height: 1;
+    color: var(--red);
+    text-shadow: 0 0 60px rgba(255,45,45,0.3);
+    position: relative;
+    z-index: 1;
+  }
+
+  .tvi-score-bg {
+    position: absolute;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 200px;
+    line-height: 1;
+    color: rgba(255,45,45,0.04);
+    top: -30px;
+    left: -10px;
+    z-index: 0;
+    user-select: none;
+  }
+
+  .tvi-max {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: -8px;
+  }
+
+  .risk-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,45,45,0.1);
+    border: 1px solid rgba(255,45,45,0.3);
+    color: var(--red);
+    padding: 8px 16px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    margin-top: 16px;
+  }
+
+  /* Gauge */
+  .gauge-card {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+  }
+
+  .gauge-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 16px 0;
+  }
+
+  .gauge {
+    position: relative;
+    width: 200px;
+    height: 110px;
+  }
+
+  .gauge svg {
+    width: 200px;
+    height: 110px;
+  }
+
+  .gauge-needle {
+    transform-origin: 100px 100px;
+    transform: rotate(-72deg);
+    transition: transform 2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .gauge-value {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    color: var(--red);
+  }
+
+  /* Direction Radar */
+  .direction-card {
+    grid-column: 3 / 4;
+    grid-row: 1 / 2;
+  }
+
+  .direction-list {
+    margin-top: 8px;
+  }
+
+  .direction-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .direction-item:last-child { border-bottom: none; }
+
+  .direction-flag {
+    font-size: 20px;
+    width: 28px;
+    text-align: center;
+  }
+
+  .direction-name {
+    flex: 1;
+    font-size: 12px;
+    color: var(--text);
+  }
+
+  .direction-bar-wrap {
+    width: 80px;
+    height: 4px;
+    background: var(--border);
+    position: relative;
+  }
+
+  .direction-bar {
+    height: 100%;
+    background: var(--red);
+    transition: width 1.5s ease;
+  }
+
+  .direction-pct {
+    font-size: 11px;
+    color: var(--muted);
+    width: 36px;
+    text-align: right;
+  }
+
+  /* Timeline */
+  .timeline-card {
+    grid-column: 2 / 4;
+    grid-row: 2 / 3;
+  }
+
+  .timeline {
+    margin-top: 16px;
+    position: relative;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--border);
+  }
+
+  .timeline-item {
+    padding: 0 0 20px 24px;
+    position: relative;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -3px;
+    top: 6px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+
+  .timeline-item.hot::before {
+    background: var(--red);
+    box-shadow: 0 0 8px var(--red);
+  }
+
+  .timeline-date {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .timeline-event {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .timeline-score {
+    display: inline-block;
+    background: rgba(255,45,45,0.1);
+    color: var(--red);
+    font-size: 10px;
+    padding: 2px 8px;
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  /* Indicators */
+  .indicators-card {
+    grid-column: 1 / 2;
+    grid-row: 3 / 4;
+  }
+
+  .indicator-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+
+  .indicator-row:last-child { border-bottom: none; }
+
+  .indicator-name { color: var(--muted); }
+
+  .indicator-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 1px;
+  }
+
+  .indicator-val.up { color: var(--red); }
+  .indicator-val.down { color: var(--green); }
+  .indicator-val.neutral { color: var(--yellow); }
+
+  /* Prediction */
+  .prediction-card {
+    grid-column: 2 / 4;
+    grid-row: 3 / 4;
+  }
+
+  .prediction-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .pred-item {
+    border: 1px solid var(--border);
+    padding: 16px;
+    text-align: center;
+  }
+
+  .pred-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .pred-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .pred-sub {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Intensity bar */
+  .intensity-card {
+    grid-column: 1 / 4;
+    grid-row: 4 / 5;
+  }
+
+  .intensity-bar-wrap {
+    margin-top: 20px;
+    position: relative;
+  }
+
+  .intensity-track {
+    height: 8px;
+    background: linear-gradient(to right, 
+      #00FF87 0%, 
+      #FFD600 40%, 
+      #FF6B00 70%, 
+      #FF2D2D 100%
+    );
+    position: relative;
+    border-radius: 0;
+  }
+
+  .intensity-marker {
+    position: absolute;
+    top: -6px;
+    width: 2px;
+    height: 20px;
+    background: white;
+    transform: translateX(-50%);
+    transition: left 2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .intensity-marker::after {
+    content: '7.2';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    color: white;
+    white-space: nowrap;
+  }
+
+  .intensity-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  /* Ticker */
+  .ticker {
+    border-top: 1px solid var(--border);
+    padding: 12px 40px;
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .ticker-inner {
+    display: inline-block;
+    animation: ticker 30s linear infinite;
+  }
+
+  @keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .ticker-item {
+    display: inline-block;
+    margin-right: 60px;
+  }
+
+  .ticker-item .highlight { color: var(--red); }
+  .ticker-item .up { color: var(--green); }
+  .ticker-item .down { color: var(--red); }
+
+  /* Animations */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card {
+    animation: fadeInUp 0.6s ease forwards;
+    opacity: 0;
+  }
+
+  .card:nth-child(1) { animation-delay: 0.1s; }
+  .card:nth-child(2) { animation-delay: 0.2s; }
+  .card:nth-child(3) { animation-delay: 0.3s; }
+  .card:nth-child(4) { animation-delay: 0.4s; }
+  .card:nth-child(5) { animation-delay: 0.5s; }
+  .card:nth-child(6) { animation-delay: 0.6s; }
+
+  /* Glitch effect on score */
+  @keyframes glitch {
+    0%, 90%, 100% { transform: none; text-shadow: 0 0 60px rgba(255,45,45,0.3); }
+    92% { transform: translate(-2px, 0); text-shadow: 2px 0 #FF6B00, -2px 0 #3B82F6; }
+    94% { transform: translate(2px, 0); text-shadow: -2px 0 #FF6B00, 2px 0 #3B82F6; }
+    96% { transform: none; }
+  }
+
+  .tvi-score {
+    animation: glitch 8s infinite;
+  }
+
+  .section-divider {
+    grid-column: 1 / 4;
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 4px 0;
+  }
+
+  /* Model formula */
+  .formula {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    background: rgba(255,255,255,0.02);
+    padding: 12px;
+    margin-top: 12px;
+    border-left: 2px solid var(--red);
+    line-height: 1.8;
+  }
+
+  .formula .var { color: var(--yellow); }
+  .formula .op { color: var(--red); }
+  .formula .num { color: var(--green); }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    TVI
+    <span>TRUMP VOLATILITY INDEX</span>
+  </div>
+  <div class="status-bar">
+    <div class="live"><div class="live-dot"></div>LIVE</div>
+    <div>2026-03-25 17:15 CST</div>
+    <div>MODEL v2.1</div>
+    <div style="color: var(--red)">HIGH RISK</div>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- TVI Main Score -->
+  <div class="card danger tvi-main">
+    <div class="card-label">// TRUMP VOLATILITY INDEX</div>
+    <div class="tvi-score-wrap">
+      <div class="tvi-score-bg">78</div>
+      <div class="tvi-score">78</div>
+      <div class="tvi-max">/ 100</div>
+    </div>
+    <div class="risk-badge">
+      <span>⚠</span> 高危区间 · HIGH RISK
+    </div>
+    <div class="formula">
+      TVI <span class="op">=</span> (<span class="var">政治压力</span> <span class="op">×</span> <span class="num">0.30</span>
+      <span class="op">+</span> <span class="var">经济因子</span> <span class="op">×</span> <span class="num">0.25</span>
+      <span class="op">+</span> <span class="var">媒体关注</span> <span class="op">×</span> <span class="num">0.20</span>
+      <span class="op">+</span> <span class="var">发病间隔</span> <span class="op">×</span> <span class="num">0.15</span>
+      <span class="op">+</span> <span class="var">司法压力</span> <span class="op">×</span> <span class="num">0.10</span>)
+      <span class="op">×</span> <span class="var">方向系数</span>
+    </div>
+  </div>
+
+  <!-- Gauge -->
+  <div class="card warning gauge-card">
+    <div class="card-label">// 风险仪表</div>
+    <div class="gauge-wrap">
+      <div class="gauge">
+        <svg viewBox="0 0 200 110">
+          <!-- Background arc -->
+          <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#1a1a1a" stroke-width="16"/>
+          <!-- Green zone -->
+          <path d="M 20 100 A 80 80 0 0 1 60 35" fill="none" stroke="#00FF87" stroke-width="16" opacity="0.6"/>
+          <!-- Yellow zone -->
+          <path d="M 60 35 A 80 80 0 0 1 100 20" fill="none" stroke="#FFD600" stroke-width="16" opacity="0.6"/>
+          <!-- Orange zone -->
+          <path d="M 100 20 A 80 80 0 0 1 140 35" fill="none" stroke="#FF6B00" stroke-width="16" opacity="0.6"/>
+          <!-- Red zone -->
+          <path d="M 140 35 A 80 80 0 0 1 180 100" fill="none" stroke="#FF2D2D" stroke-width="16" opacity="0.6"/>
+          <!-- Needle -->
+          <g class="gauge-needle" id="needle">
+            <line x1="100" y1="100" x2="100" y2="28" stroke="white" stroke-width="2"/>
+            <circle cx="100" cy="100" r="5" fill="white"/>
+          </g>
+          <!-- Labels -->
+          <text x="14" y="115" fill="#555" font-size="9" font-family="IBM Plex Mono">0</text>
+          <text x="90" y="14" fill="#555" font-size="9" font-family="IBM Plex Mono">50</text>
+          <text x="178" y="115" fill="#555" font-size="9" font-family="IBM Plex Mono">100</text>
+        </svg>
+        <div class="gauge-value">78</div>
+      </div>
+    </div>
+    <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--muted); margin-top:8px;">
+      <span style="color:var(--green)">安全</span>
+      <span style="color:var(--yellow)">警戒</span>
+      <span style="color:var(--orange)">危险</span>
+      <span style="color:var(--red)">极危</span>
+    </div>
+  </div>
+
+  <!-- Direction -->
+  <div class="card info direction-card">
+    <div class="card-label">// 发病方向预测</div>
+    <div class="direction-list">
+      <div class="direction-item">
+        <div class="direction-flag">🇨🇳</div>
+        <div class="direction-name">中国</div>
+        <div class="direction-bar-wrap"><div class="direction-bar" style="width:60%"></div></div>
+        <div class="direction-pct">60%</div>
+      </div>
+      <div class="direction-item">
+        <div class="direction-flag">🇮🇷</div>
+        <div class="direction-name">伊朗/中东</div>
+        <div class="direction-bar-wrap"><div class="direction-bar" style="width:25%; background:var(--orange)"></div></div>
+        <div class="direction-pct">25%</div>
+      </div>
+      <div class="direction-item">
+        <div class="direction-flag">🇪🇺</div>
+        <div class="direction-name">欧盟</div>
+        <div class="direction-bar-wrap"><div class="direction-bar" style="width:10%; background:var(--yellow)"></div></div>
+        <div class="direction-pct">10%</div>
+      </div>
+      <div class="direction-item">
+        <div class="direction-flag">🌎</div>
+        <div class="direction-name">拉美</div>
+        <div class="direction-bar-wrap"><div class="direction-bar" style="width:5%; background:var(--green)"></div></div>
+        <div class="direction-pct">5%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="card timeline-card">
+    <div class="card-label">// 历史发病记录</div>
+    <div class="timeline">
+      <div class="timeline-item hot">
+        <div class="timeline-date">2025-04-02 · 对等关税日</div>
+        <div class="timeline-event">宣布全球"对等关税"，对中国加征34%关税，全球股市暴跌</div>
+        <div class="timeline-score">TVI 9.2 · 极危</div>
+      </div>
+      <div class="timeline-item hot">
+        <div class="timeline-date">2025-01-20 · 就职首日</div>
+        <div class="timeline-event">同时对加拿大、墨西哥、中国开炮，签署系列行政令</div>
+        <div class="timeline-score">TVI 8.7 · 极危</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">2024-11-06 · 大选胜利后</div>
+        <div class="timeline-event">威胁对所有进口商品加征10-20%关税，市场剧烈波动</div>
+        <div class="timeline-score">TVI 7.5 · 危险</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">2019-05-10 · 贸易战升级</div>
+        <div class="timeline-event">将对华关税从10%提升至25%，中方反制</div>
+        <div class="timeline-score">TVI 8.1 · 极危</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">2018-03-22 · 钢铝关税</div>
+        <div class="timeline-event">宣布对钢铁铝制品加征关税，贸易战正式开启</div>
+        <div class="timeline-score">TVI 7.8 · 危险</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Market Indicators -->
+  <div class="card indicators-card">
+    <div class="card-label">// 市场联动指标</div>
+    <div class="indicator-row">
+      <span class="indicator-name">VIX 恐慌指数</span>
+      <span class="indicator-val up">28.4 ↑</span>
+    </div>
+    <div class="indicator-row">
+      <span class="indicator-name">美元指数 DXY</span>
+      <span class="indicator-val down">103.2 ↓</span>
+    </div>
+    <div class="indicator-row">
+      <span class="indicator-name">黄金 XAU/USD</span>
+      <span class="indicator-val up">3,024 ↑</span>
+    </div>
+    <div class="indicator-row">
+      <span class="indicator-name">10Y 美债收益率</span>
+      <span class="indicator-val neutral">4.31% →</span>
+    </div>
+    <div class="indicator-row">
+      <span class="indicator-name">纳斯达克</span>
+      <span class="indicator-val down">-1.8% ↓</span>
+    </div>
+  </div>
+
+  <!-- Prediction -->
+  <div class="card prediction-card">
+    <div class="card-label">// 下次发病预测</div>
+    <div class="prediction-grid">
+      <div class="pred-item">
+        <div class="pred-label">预测时间窗口</div>
+        <div class="pred-value" style="font-size:20px; color:var(--red)">4月1-15日</div>
+        <div class="pred-sub">置信度 72%</div>
+      </div>
+      <div class="pred-item">
+        <div class="pred-label">预测烈度</div>
+        <div class="pred-value" style="color:var(--orange)">3-4级</div>
+        <div class="pred-sub">政策行动级别</div>
+      </div>
+      <div class="pred-item">
+        <div class="pred-label">主要方向</div>
+        <div class="pred-value" style="font-size:20px">🇨🇳 中国</div>
+        <div class="pred-sub">贸易/科技</div>
+      </div>
+    </div>
+    <div style="margin-top:16px; padding:12px; background:rgba(255,45,45,0.05); border:1px solid rgba(255,45,45,0.15); font-size:11px; color:var(--muted); line-height:1.8;">
+      <span style="color:var(--red)">⚠ 触发因素：</span>
+      对等关税日（4月2日）临近 · 美股近期承压 · 中美谈判僵局 · 支持率下滑压力
+    </div>
+  </div>
+
+  <!-- Intensity Bar -->
+  <div class="card intensity-card">
+    <div class="card-label">// 当前烈度位置</div>
+    <div class="intensity-bar-wrap">
+      <div class="intensity-track">
+        <div class="intensity-marker" id="intensityMarker" style="left: 72%"></div>
+      </div>
+      <div class="intensity-labels">
+        <span>1 · 口嗨</span>
+        <span>3 · 威胁</span>
+        <span>5 · 行政令</span>
+        <span>7 · 制裁</span>
+        <span>10 · 危机</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Ticker -->
+<div class="ticker">
+  <div class="ticker-inner">
+    <span class="ticker-item">TVI <span class="highlight">78/100</span> · 高危</span>
+    <span class="ticker-item">下次发病预测 <span class="highlight">4月1-15日</span></span>
+    <span class="ticker-item">主要方向 <span class="highlight">🇨🇳 中国贸易</span></span>
+    <span class="ticker-item">VIX <span class="down">28.4 ↑</span></span>
+    <span class="ticker-item">黄金 <span class="up">$3,024 ↑</span></span>
+    <span class="ticker-item">纳斯达克 <span class="down">-1.8%</span></span>
+    <span class="ticker-item">美元指数 <span class="up">103.2 ↓</span></span>
+    <span class="ticker-item">模型版本 v2.1 · 2026-03-25更新</span>
+    <span class="ticker-item">⚠ 本指数仅供参考，不构成投资建议</span>
+    <!-- Repeat for seamless loop -->
+    <span class="ticker-item">TVI <span class="highlight">78/100</span> · 高危</span>
+    <span class="ticker-item">下次发病预测 <span class="highlight">4月1-15日</span></span>
+    <span class="ticker-item">主要方向 <span class="highlight">🇨🇳 中国贸易</span></span>
+    <span class="ticker-item">VIX <span class="down">28.4 ↑</span></span>
+    <span class="ticker-item">黄金 <span class="up">$3,024 ↑</span></span>
+    <span class="ticker-item">纳斯达克 <span class="down">-1.8%</span></span>
+    <span class="ticker-item">美元指数 <span class="up">103.2 ↓</span></span>
+    <span class="ticker-item">模型版本 v2.1 · 2026-03-25更新</span>
+    <span class="ticker-item">⚠ 本指数仅供参考，不构成投资建议</span>
+  </div>
+</div>
+
+<script>
+  // Animate gauge needle to 78/100
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      const needle = document.getElementById('needle');
+      // -90deg = 0, +90deg = 100
+      // 78/100 = 0.78, angle = -90 + (180 * 0.78) = -90 + 140.4 = 50.4deg
+      const angle = -90 + (180 * 0.78);
+      needle.style.transform = `rotate(${angle}deg)`;
+      needle.style.transition = 'transform 2s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    }, 800);
+  });
+
+  // Animate direction bars
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      document.querySelectorAll('.direction-bar').forEach(bar => {
+        const target = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => { bar.style.width = target; bar.style.transition = 'width 1.5s ease'; }, 100);
+      });
+    }, 500);
+  });
+
+  // Update timestamp
+  function updateTime() {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const str = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())} CST`;
+    document.querySelectorAll('.status-bar div')[1].textContent = str;
+  }
+  setInterval(updateTime, 1000);
+  updateTime();
+</script>
+
+</body>
+</html>
