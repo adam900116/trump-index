@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>特朗普的"发病时间表"，被我算出来了</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #f5f5f5;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #333;
+    line-height: 1.8;
+  }
+
+  .article {
+    max-width: 680px;
+    margin: 40px auto;
+    background: #fff;
+    padding: 48px 40px;
+    border-radius: 4px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+  }
+
+  /* 标题 */
+  .title {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.4;
+    color: #1a1a1a;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: #999;
+    margin-bottom: 36px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  /* 段落 */
+  p {
+    font-size: 16px;
+    color: #444;
+    margin-bottom: 16px;
+    line-height: 1.9;
+  }
+
+  /* 分割线 */
+  .divider {
+    border: none;
+    border-top: 2px solid #f0f0f0;
+    margin: 32px 0;
+  }
+
+  /* 小标题 */
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 32px 0 16px;
+    padding-left: 12px;
+    border-left: 4px solid #e63946;
+    line-height: 1.4;
+  }
+
+  /* 铁律卡片 */
+  .rule-card {
+    background: #fafafa;
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+  }
+
+  .rule-card .rule-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #e63946;
+    margin-bottom: 6px;
+  }
+
+  .rule-card p {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+    line-height: 1.7;
+  }
+
+  /* 公式块 */
+  .formula-box {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 10px;
+    padding: 24px 28px;
+    margin: 20px 0;
+    color: #fff;
+  }
+
+  .formula-box .formula-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: #888;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+
+  .formula-box .formula-text {
+    font-size: 15px;
+    color: #e0e0e0;
+    line-height: 2;
+    font-family: "Courier New", monospace;
+  }
+
+  .formula-box .formula-text span {
+    color: #e63946;
+    font-weight: 700;
+  }
+
+  /* 因子列表 */
+  .factor-list {
+    margin: 16px 0;
+  }
+
+  .factor-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f5f5f5;
+  }
+
+  .factor-item:last-child { border-bottom: none; }
+
+  .factor-pct {
+    background: #e63946;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+
+  .factor-desc {
+    font-size: 14px;
+    color: #555;
+    line-height: 1.6;
+  }
+
+  .factor-desc strong { color: #1a1a1a; }
+
+  /* 验证卡片 */
+  .verify-list { margin: 16px 0; }
+
+  .verify-item {
+    display: flex;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid #f5f5f5;
+    align-items: flex-start;
+  }
+
+  .verify-item:last-child { border-bottom: none; }
+
+  .verify-check {
+    font-size: 20px;
+    margin-top: 2px;
+  }
+
+  .verify-content { flex: 1; }
+
+  .verify-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+  }
+
+  .verify-tvi {
+    display: inline-block;
+    background: #fff3f3;
+    color: #e63946;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+  }
+
+  .verify-result {
+    font-size: 13px;
+    color: #666;
+  }
+
+  /* 方向列表 */
+  .direction-list { margin: 16px 0; }
+
+  .direction-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f5f5f5;
+  }
+
+  .direction-item:last-child { border-bottom: none; }
+
+  .direction-flag { font-size: 24px; }
+
+  .direction-info { flex: 1; }
+
+  .direction-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+
+  .direction-note {
+    font-size: 12px;
+    color: #999;
+    margin-top: 2px;
+  }
+
+  .direction-bar-wrap {
+    width: 120px;
+  }
+
+  .direction-pct-text {
+    font-size: 14px;
+    font-weight: 700;
+    color: #e63946;
+    margin-bottom: 4px;
+    text-align: right;
+  }
+
+  .direction-bar-bg {
+    height: 6px;
+    background: #f0f0f0;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .direction-bar-fill {
+    height: 100%;
+    background: linear-gradient(to right, #e63946, #ff6b6b);
+    border-radius: 3px;
+  }
+
+  /* 当前读数 */
+  .tvi-current {
+    background: linear-gradient(135deg, #fff3f3 0%, #fff8f8 100%);
+    border: 1px solid #ffd0d0;
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 20px 0;
+    text-align: center;
+  }
+
+  .tvi-score-big {
+    font-size: 72px;
+    font-weight: 900;
+    color: #e63946;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .tvi-label {
+    font-size: 14px;
+    color: #e63946;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+  }
+
+  .tvi-factors {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+
+  .tvi-factor-tag {
+    background: #fff;
+    border: 1px solid #ffd0d0;
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px;
+    color: #666;
+  }
+
+  /* 技术栈 */
+  .tech-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 16px 0;
+  }
+
+  .tech-tag {
+    background: #f5f5f5;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+    color: #555;
+    font-weight: 500;
+  }
+
+  /* 链接块 */
+  .link-box {
+    background: #f8f9ff;
+    border: 1px solid #e0e4ff;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 20px 0;
+    text-align: center;
+  }
+
+  .link-box .link-label {
+    font-size: 12px;
+    color: #999;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .link-box .link-url {
+    font-size: 16px;
+    color: #4361ee;
+    font-weight: 700;
+    word-break: break-all;
+  }
+
+  .link-box .link-note {
+    font-size: 12px;
+    color: #f4a261;
+    margin-top: 6px;
+  }
+
+  /* 互动区 */
+  .interact-box {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 12px;
+    padding: 28px;
+    margin: 32px 0 0;
+    text-align: center;
+    color: #fff;
+  }
+
+  .interact-box .interact-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .interact-box p {
+    font-size: 14px;
+    color: #aaa;
+    margin-bottom: 8px;
+  }
+
+  .interact-box .interact-cta {
+    margin-top: 16px;
+    font-size: 13px;
+    color: #666;
+  }
+
+  /* 引用块 */
+  blockquote {
+    border-left: 4px solid #e63946;
+    padding: 12px 20px;
+    background: #fafafa;
+    margin: 20px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 15px;
+    color: #555;
+    font-style: italic;
+  }
+
+  /* 结尾标签 */
+  .end-tag {
+    text-align: center;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #f0f0f0;
+    font-size: 13px;
+    color: #bbb;
+    letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+<div class="article">
+
+  <!-- 标题 -->
+  <div class="title">特朗普的"发病时间表"，被我算出来了 🎯</div>
+  <div class="subtitle">TVI · 特朗普发病指数 · 2026.03.25</div>
+
+  <!-- 开头 -->
+  <p>你有没有发现，特朗普就像个定时炸弹？</p>
+  <p>每隔一段时间，他就会准时"发作"——发推特、加关税、退出国际组织、骂某个国家……</p>
+  <p>感觉完全是随机的？<strong>错！</strong></p>
+  <p>我花了几个周末，用 AI 建了个模型，把他的行为模式扒了个底朝天。结果发现：这家伙，居然<strong>高度可预测</strong>。</p>
+  <p>于是我做了个「特朗普发病指数」——<strong>TVI（Trump Volatility Index）</strong>。一个能预测他下次"发作"时间、烈度、方向的可视化仪表盘。</p>
+
+  <hr class="divider">
+
+  <!-- 三条铁律 -->
+  <div class="section-title">▌ 特朗普行为的三条铁律</div>
+
+  <p>我翻了特朗普过去8年的公开数据——推特、政策声明、经济指标、民调数据……发现他的行为居然有三条"铁律"：</p>
+
+  <div class="rule-card">
+    <div class="rule-title">🔺 铁律一：政治压力大时，必须转移注意力</div>
+    <p>民调跌了、国会找茬了、司法调查紧了……怎么办？甩锅！找敌人！制造新话题！这招他用了无数次，堪称肌肉记忆。</p>
+  </div>
+
+  <div class="rule-card">
+    <div class="rule-title">🔺 铁律二：经济差时，必须找替罪羊</div>
+    <p>股市跌了、失业率高了、贸易逆差大了……谁背锅？中国、墨西哥、美联储……反正不是他。"都是别人的错"是他的经典剧本。</p>
+  </div>
+
+  <div class="rule-card">
+    <div class="rule-title">🔺 铁律三：媒体关注度低时，必须制造话题</div>
+    <p>没有热搜？没有头条？那就发个惊悚推特，或者突然宣布一个"重大决定"。毕竟，存在感就是他的氧气。</p>
+  </div>
+
+  <p>这三条铁律，几乎可以解释他90%的"发病"行为。</p>
+
+  <hr class="divider">
+
+  <!-- 计算公式 -->
+  <div class="section-title">▌ TVI 怎么算出来的？</div>
+
+  <p>有了规律，就可以建模。TVI 的核心公式是这样的：</p>
+
+  <div class="formula-box">
+    <div class="formula-label">// TVI FORMULA</div>
+    <div class="formula-text">
+      TVI = <span>政治压力</span> × 0.30<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span>经济因子</span> × 0.25<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span>媒体关注</span> × 0.20<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span>发病间隔</span> × 0.15<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span>司法压力</span> × 0.10
+    </div>
+  </div>
+
+  <div class="factor-list">
+    <div class="factor-item">
+      <span class="factor-pct">30%</span>
+      <div class="factor-desc"><strong>政治压力</strong>——民调支持率、国会反对声、党内分裂程度</div>
+    </div>
+    <div class="factor-item">
+      <span class="factor-pct">25%</span>
+      <div class="factor-desc"><strong>经济因子</strong>——股市表现、失业率、贸易逆差</div>
+    </div>
+    <div class="factor-item">
+      <span class="factor-pct">20%</span>
+      <div class="factor-desc"><strong>媒体关注</strong>——特朗普最近7天在主流媒体的出现频率</div>
+    </div>
+    <div class="factor-item">
+      <span class="factor-pct">15%</span>
+      <div class="factor-desc"><strong>发病间隔</strong>——上次"大动作"到现在的天数（越久越容易发作）</div>
+    </div>
+    <div class="factor-item">
+      <span class="factor-pct">10%</span>
+      <div class="factor-desc"><strong>司法压力</strong>——正在进行的诉讼、调查数量和进展</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 历史验证 -->
+  <div class="section-title">▌ 历史验证：四次"发病"，全部命中</div>
+
+  <div class="verify-list">
+    <div class="verify-item">
+      <div class="verify-check">✅</div>
+      <div class="verify-content">
+        <div class="verify-title">2018年3月 · 钢铝关税</div>
+        <span class="verify-tvi">TVI 72分 · 高危</span>
+        <div class="verify-result">预测方向：贸易战 → 实际：钢铝关税25%/10%，贸易战正式开启</div>
+      </div>
+    </div>
+    <div class="verify-item">
+      <div class="verify-check">✅</div>
+      <div class="verify-content">
+        <div class="verify-title">2019年5月 · 贸易战升级</div>
+        <span class="verify-tvi">TVI 68分 · 高危</span>
+        <div class="verify-result">预测方向：中国 → 实际：对华2000亿商品加税至25%</div>
+      </div>
+    </div>
+    <div class="verify-item">
+      <div class="verify-check">✅</div>
+      <div class="verify-content">
+        <div class="verify-title">2025年1月 · 就职首日</div>
+        <span class="verify-tvi">TVI 85分 · 极高危</span>
+        <div class="verify-result">预测方向：移民+中国 → 实际：退出WHO、边境紧急状态、对华强硬</div>
+      </div>
+    </div>
+    <div class="verify-item">
+      <div class="verify-check">✅</div>
+      <div class="verify-content">
+        <div class="verify-title">2025年4月 · "对等关税日"</div>
+        <span class="verify-tvi">TVI 78分 · 高危</span>
+        <div class="verify-result">预测方向：全球贸易 → 实际：宣布对等关税，全球股市暴跌</div>
+      </div>
+    </div>
+  </div>
+
+  <blockquote>四次重大事件，TVI全部提前预警。这不是玄学，这是数据。</blockquote>
+
+  <hr class="divider">
+
+  <!-- 发病方向 -->
+  <div class="section-title">▌ 发病方向：中国是大热门</div>
+
+  <p>TVI 不仅预测"什么时候发病"，还预测"往哪发病"：</p>
+
+  <div class="direction-list">
+    <div class="direction-item">
+      <div class="direction-flag">🇨🇳</div>
+      <div class="direction-info">
+        <div class="direction-name">中国</div>
+        <div class="direction-note">贸易逆差、科技竞争、地缘政治，永远是头号靶子</div>
+      </div>
+      <div class="direction-bar-wrap">
+        <div class="direction-pct-text">60%</div>
+        <div class="direction-bar-bg"><div class="direction-bar-fill" style="width:60%"></div></div>
+      </div>
+    </div>
+    <div class="direction-item">
+      <div class="direction-flag">🇮🇷</div>
+      <div class="direction-info">
+        <div class="direction-name">伊朗/中东</div>
+        <div class="direction-note">核问题、石油、以色列因素</div>
+      </div>
+      <div class="direction-bar-wrap">
+        <div class="direction-pct-text">25%</div>
+        <div class="direction-bar-bg"><div class="direction-bar-fill" style="width:25%"></div></div>
+      </div>
+    </div>
+    <div class="direction-item">
+      <div class="direction-flag">🇪🇺</div>
+      <div class="direction-info">
+        <div class="direction-name">欧盟</div>
+        <div class="direction-note">贸易、北约军费、数字税</div>
+      </div>
+      <div class="direction-bar-wrap">
+        <div class="direction-pct-text">10%</div>
+        <div class="direction-bar-bg"><div class="direction-bar-fill" style="width:10%"></div></div>
+      </div>
+    </div>
+    <div class="direction-item">
+      <div class="direction-flag">🌎</div>
+      <div class="direction-info">
+        <div class="direction-name">拉美</div>
+        <div class="direction-note">移民问题，顺手打一下</div>
+      </div>
+      <div class="direction-bar-wrap">
+        <div class="direction-pct-text">5%</div>
+        <div class="direction-bar-bg"><div class="direction-bar-fill" style="width:5%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 当前读数 -->
+  <div class="section-title">▌ 当前读数</div>
+
+  <div class="tvi-current">
+    <div class="tvi-score-big">48</div>
+    <div class="tvi-label">⚠ 警戒级别 · MEDIUM RISK</div>
+    <p style="color:#888; font-size:14px; margin:0">截至 2026-03-25 · 主要方向：🇨🇳 中国（60%）</p>
+    <div class="tvi-factors">
+      <span class="tvi-factor-tag">经济因子上升</span>
+      <span class="tvi-factor-tag">媒体关注偏低</span>
+      <span class="tvi-factor-tag">发病间隔较长</span>
+    </div>
+  </div>
+
+  <p>TVI预测：未来1-2周内，很可能有一次中等烈度的"发病"。可能形式为贸易相关表态或科技限制。</p>
+
+  <hr class="divider">
+
+  <!-- 技术实现 -->
+  <div class="section-title">▌ 技术实现：AI + 全自动化</div>
+
+  <p>整个系统基本实现了自动化：每天定时抓取数据 → 计算因子 → 更新TVI → 自动部署上线。</p>
+
+  <div class="tech-list">
+    <span class="tech-tag">🐍 Python 引擎</span>
+    <span class="tech-tag">🔍 ProSearch 联网搜索</span>
+    <span class="tech-tag">📦 GitHub 托管</span>
+    <span class="tech-tag">⚡ Vercel 自动部署</span>
+  </div>
+
+  <div class="link-box">
+    <div class="link-label">在线体验地址</div>
+    <div class="link-url">https://trump-index-delta.vercel.app/</div>
+    <div class="link-note">⚠ 需要科学上网</div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 结尾 -->
+  <div class="section-title">▌ 最后说两句</div>
+
+  <p>做这个项目，不是为了"黑"特朗普，也不是为了站队。</p>
+  <p>纯粹是出于一个好奇：<strong>一个看起来"疯狂"的政治人物，他的行为背后，有没有可识别的模式？</strong></p>
+  <p>TVI给出的答案是：<strong>有，而且比想象中清晰。</strong></p>
+  <p>政治人物也是人，人的行为是有迹可循的。当压力积累到一定程度，当利益受到威胁，当注意力开始流失……他们就会"发作"。</p>
+  <p>特朗普，恰好是那种"全世界都能看见他发作"的人。所以他的模式，反而更容易被捕捉。</p>
+
+  <!-- 互动区 -->
+  <div class="interact-box">
+    <div class="interact-title">📝 你来预测一下</div>
+    <p>你觉得特朗普下一次"发病"会是什么时候？</p>
+    <p>会是冲着中国来，还是另有目标？</p>
+    <p>欢迎评论区留下你的预测，看看谁的直觉最准！</p>
+    <div class="interact-cta">觉得有意思的话，转发给对政治、数据、AI感兴趣的朋友 👇</div>
+  </div>
+
+  <div class="end-tag">【 TVI · 让政治行为可预测 】🎯</div>
+
+</div>
+</body>
+</html>

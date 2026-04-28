@@ -262,7 +262,17 @@ def update_html(data: dict):
     # 1. 替换主分数
     html = re.sub(r'(<div class="tvi-score-bg"[^>]*>)\d+\.?\d*(</div>)', rf'\g<1>{tvi}\2', html)
     html = re.sub(r'(<div class="tvi-score"[^>]*>)\d+\.?\d*(</div>)', rf'\g<1>{tvi}\2', html)
-    html = re.sub(r'(<div class="gauge-value"[^>]*>)\d+\.?\d*(</div>)', rf'\g<1>{tvi}\2', html)
+    html = re.sub(r'(<div class="gauge-value"[^>]*>)[\d\-\.]+(</div>)', rf'\g<1>{tvi}\2', html)
+
+    # 2. 替换烈度标记位置和data-tvi
+    html = re.sub(
+        r'(<div class="intensity-marker"[^>]*?)data-tvi="[\d\.]+"',
+        rf'\g<1>data-tvi="{tvi}"', html
+    )
+    html = re.sub(
+        r'(<div class="intensity-marker"[^>]*?)style="left: [\d\.]+%"',
+        rf'\g<1>style="left: {tvi}%"', html
+    )
 
     # 2. 替换风险标签
     html = re.sub(
