@@ -1,5 +1,5 @@
 {
-  "tvi": 48.0,
+  "tvi": 48.4,
   "risk_level": "警戒",
   "risk_color": "#FFD600",
   "components": {
@@ -7,7 +7,7 @@
     "economic": 5.0,
     "media": 4.0,
     "interval": 5.0,
-    "legal": 5.0
+    "legal": 5.4
   },
   "directions": {
     "中国": 0.59,
@@ -15,7 +15,7 @@
     "欧盟": 0.09,
     "拉美": 0.05
   },
-  "updated_at": "2026-05-05T09:09:09.817427",
+  "updated_at": "2026-05-06T08:49:49.401532",
   "next_window": "4月1-15日",
   "confidence": 72,
   "history": [
@@ -182,6 +182,11 @@
     {
       "date": "2026-05-05",
       "tvi": 48.0,
+      "risk_level": "警戒"
+    },
+    {
+      "date": "2026-05-06",
+      "tvi": 48.4,
       "risk_level": "警戒"
     }
   ]
